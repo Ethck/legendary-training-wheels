@@ -1,0 +1,14 @@
+{
+    "name": "legendary-training-wheels",
+    "title": "Legendary Training Wheels",
+    "description": "This module provides reminders for legendary actions.",
+    "version": "0.0.1",
+    "minimumCoreVersion": "0.6.0",
+    "compatibleCoreVersion": "0.6.6",
+    "author": "Ethck",
+    "esmodules": ["/wheels.js"],
+    "styles": ["/css/wheels.css"],
+    "url": "https://github.com/ethck/faction-sheet",
+    "manifest": "https://raw.githubusercontent.com/ethck/legendary-training-wheels/master/module.json",
+    "download": "https://github.com/ethck/legendary-training-wheels/"
+}
