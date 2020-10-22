@@ -1,0 +1,19 @@
+<form>
+  {{#each legends as | legend |}}
+    <div style="display: flex; flex: 1 1 auto; border-bottom: 2px solid #782e22;">
+      <img src="{{legend.img}}" style="width: 60px; height: 60px; flex-basis: 60px;"></img>
+    <span style="flex-basis: 80%; padding-left: 10px; font-size: 2em; text-align: center;">
+      {{legend.name}}
+    </span>
+    <span style="margin-right: 0px; text-align: center; font-size: 2em;">Legendary Actions {{legend.remainingLegActions}}/3</span>
+  </div>
+    <ul>
+      {{#each legend.legendaryItems as | attack |}}
+        <div style="display: flex; flex: 0 1 auto;">
+        <button type="button" name="{{legend._id}}" id="{{attack.name}}">{{attack.name}}</button>
+        <span style="flex-basis: 100px;">{{attack.data.consume.amount}} Action</span>
+      </div>
+      {{/each}}
+    </ul>
+  {{/each}}
+</form>

@@ -1,4 +1,6 @@
 import { TemporaryCombatantForm } from "../combat-utility-belt/modules/temporary-combatants/form.js";
+import { LegActions } from "./legActions.js";
+
 
 Hooks.on("createCombatant", async (currCombat, currToken, options, currID) => {
     await new Promise(r => setTimeout(r, 200));
@@ -48,7 +50,7 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
     if (!playerTurns) return;
     if (playerTurns.some((pTurn) => ((turn === pTurn + 1) || (turn === 0 && pTurn === currCombat.turns.length - 1)))){
         let activeLegends = legends.map((legendary) => {
-            console.log(legendary);
+            console.log(legendary.token);
             const rLA = getProperty(legendary, "token.actorData.data.resources.legact.value") ||
                 getProperty(legendary, "actor.data.data.resources.legact.value")
             const lItems = getProperty(legendary, "token.actorData.data.items") || getProperty(legendary, "actor.data.items");
@@ -59,26 +61,19 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
                     if (hasProperty(litem, "data.activation") && litem.data.activation.type === "legendary") {
                         return litem;
                     }
-                })
+                }),
+                img: getProperty(legendary, "token.img"),
+                _id: getProperty(legendary, "token._id")
             }
         })
+        let myLegends = [];
         for (const legend of activeLegends){
             if (parseInt(legend.remainingLegActions) !== 0) {
-                let content = "";
-                for (const attack of legend.legendaryItems) {
-                    content += "Name: " + attack.name + " Cost: " + attack.data.consume.amount + "</br>";
-                }
-                let d = new Dialog({
-                    title: 'Legendary Actions',
-                    content: content + `Creature ` + legend.name + ` is in the combat with ` + legend.remainingLegActions + ` Legendary Actions left.`,
-                    buttons: {
-                        ok: {
-                          icon: '<i class="fas fa-check"></i>',
-                          label: 'Ok',
-                        },
-                    }
-                }).render(true);
+                myLegends.push(legend)
             }
         }
+
+        let form = new LegActions(myLegends);
+        form.render(true);
     }
 })
