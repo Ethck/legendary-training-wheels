@@ -3,6 +3,7 @@ export class LegActions extends FormApplication {
     super(...args);
     game.users.apps.push(this);
     this.legends = legends;
+    this.count = 0;
   }
 
   static get defaultOptions() {
@@ -19,7 +20,6 @@ export class LegActions extends FormApplication {
 
   async getData() {
     const legends = this.legends;
-    console.log(legends[0])
     return {
       legends: legends
 
@@ -36,12 +36,27 @@ export class LegActions extends FormApplication {
   }
 
   handleItem(event) {
-    const legToken = canvas.tokens.get($(event.target).attr("name"))
-    let attack = legToken.actor.items.getName($(event.target).attr("id"));
+    let elem = $(event.target).parent()
+    // this is actually the token id... to get token
+    const legToken = canvas.tokens.get(elem.attr("name"))
+    // find the attack being used, by name
+    let attack = legToken.actor.items.getName(elem.attr("id"));
 
     // Thanks D&D5e System!
-    if ( attack.data.type === "spell" ) return legToken.useSpell(attack);
-    return attack.roll();
+    if ( attack.data.type === "spell" ) {
+      legToken.useSpell(attack);
+    } else {
+      attack.roll();
+    }
+
+    elem.parent().parent().find("button").prop("disabled",true);
+
+    this.count += 1;
+    // auto submit when all actions are used.
+    if (this.count === this.legends.length) {
+      this.submit();
+    }
+
   }
 
   async _updateObject(event, formData) {

@@ -12,7 +12,7 @@ Hooks.on("createCombatant", async (currCombat, currToken, options, currID) => {
             const temporaryCombatantForm = new TemporaryCombatantForm({});
             // Render form, wait to fill
             await temporaryCombatantForm.render(true);
-            await new Promise(r => setTimeout(r, 20));
+            await new Promise(r => setTimeout(r, 200));
             // fill
             let tcForm = $(temporaryCombatantForm.form);
             tcForm.find('[name="name"]').val("Lair Action");
@@ -35,10 +35,11 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
     currCombat.turns.forEach(async (combatant, pos) => {
         const legMax = getProperty(combatant, "token.actorData.data.resources.legact.max") || 
             getProperty(combatant, "actor.data.data.resources.legact.max");;
-        if (getProperty(combatant, "actor").isPC) {
+        if (getProperty(combatant, "actor").hasPlayerOwner) {
             playerTurns.push(pos);
         } else if (legMax){
-            if ("round" in currOptions) { // Reset legendary actions when we get to the start of init
+            // Reset legendary actions when we get to the start of next entity's turn
+            if (turn === pos + 1 || (turn === 0 && pos === currCombat.turns.length - 1)) {
                 legUpdates.push({_id: combatant.token._id,  "actorData.data.resources.legact.value": legMax})
             }
             legends.push(combatant);
@@ -50,13 +51,15 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
     if (!playerTurns) return;
     if (playerTurns.some((pTurn) => ((turn === pTurn + 1) || (turn === 0 && pTurn === currCombat.turns.length - 1)))){
         let activeLegends = legends.map((legendary) => {
-            console.log(legendary.token);
             const rLA = getProperty(legendary, "token.actorData.data.resources.legact.value") ||
                 getProperty(legendary, "actor.data.data.resources.legact.value")
+            const mLA = getProperty(legendary, "token.actorData.data.resources.legact.max") ||
+                getProperty(legendary, "actor.data.data.resources.legact.max")
             const lItems = getProperty(legendary, "token.actorData.data.items") || getProperty(legendary, "actor.data.items");
             return {
                 name: getProperty(legendary, "name"),
                 remainingLegActions: rLA,
+                maxLegActions: mLA,
                 legendaryItems: lItems.filter((litem) => {
                     if (hasProperty(litem, "data.activation") && litem.data.activation.type === "legendary") {
                         return litem;
@@ -75,5 +78,48 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
 
         let form = new LegActions(myLegends);
         form.render(true);
+    }
+})
+
+Hooks.on("createChatMessage", async (message, options, id) => {
+    if (message.isRoll) {
+        if (getProperty(message, "data.flavor") && getProperty(message, "data.flavor").includes("Saving Throw")) {
+            let legTok = canvas.tokens.get(getProperty(message, "data.speaker.token"));
+            const legRes = getProperty(legTok, "actorData.data.resources.legres.value") || getProperty(legTok, "actor.data.data.resources.legres.value");
+            if (legRes){
+                const maxRes = getProperty(legTok, "actorData.data.resources.legres.max") || getProperty(legTok, "actor.data.data.resources.legres.max");
+                let use = false;
+                let d = new Dialog({
+                  title: 'Legendary Resistance',
+                  content: `A Saving Throw has been detected. Would you like to use Legendary Resistance to ignore it? You have ` + legRes + `/` + maxRes + ` resistances remaining.`,
+                  buttons: {
+                    yes: {
+                      icon: '<i class="fas fa-check"></i>',
+                      label: 'Yes',
+                      callback: () => (use = true),
+                    },
+                    no: {
+                        icon: '<i class="fas fa-cross"></i>',
+                        label: 'No',
+                        callback: () => (use = false),
+                    }
+                  },
+                  close: async (html) => {
+                      if (use) {
+                        let legActor = game.actors.get(getProperty(message, "data.speaker.actor"));
+                        ChatMessage.create({
+                            user: game.user._id,
+                            speaker: ChatMessage.getSpeaker({legActor}),
+                            content: "If the creature fails a saving throw, it can choose to succeed instead.",
+                            flavor: "has used Legendary Resistance to succeed on the save!",
+                            type: CONST.CHAT_MESSAGE_TYPES.IC,
+                          });
+                        
+                        await legTok.update({"actorData.data.resources.legres.value": legRes - 1});
+                      }
+                    },
+                }).render(true);
+            }       
+        }
     }
 })
