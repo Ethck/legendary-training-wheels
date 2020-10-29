@@ -85,8 +85,10 @@ Hooks.on("createChatMessage", async (message, options, id) => {
     if (message.isRoll) {
         if (getProperty(message, "data.flavor") && getProperty(message, "data.flavor").includes("Saving Throw")) {
             let legTok = canvas.tokens.get(getProperty(message, "data.speaker.token"));
+            // Find legRes property. Either from the token first or from the actor
             const legRes = getProperty(legTok, "actorData.data.resources.legres.value") || getProperty(legTok, "actor.data.data.resources.legres.value");
             if (legRes){
+                // Do the same with finding the max
                 const maxRes = getProperty(legTok, "actorData.data.resources.legres.max") || getProperty(legTok, "actor.data.data.resources.legres.max");
                 let use = false;
                 let d = new Dialog({
@@ -99,7 +101,7 @@ Hooks.on("createChatMessage", async (message, options, id) => {
                       callback: () => (use = true),
                     },
                     no: {
-                        icon: '<i class="fas fa-cross"></i>',
+                        icon: '<i class="fas fa-close"></i>',
                         label: 'No',
                         callback: () => (use = false),
                     }
@@ -123,3 +125,19 @@ Hooks.on("createChatMessage", async (message, options, id) => {
         }
     }
 })
+
+Hooks.once("init", () => {
+  game.settings.register("legendary-training-wheels", "notificationType", {
+    name: "Level of Notifications",
+    hint: "How often do you want to be bothered?",
+    scope: "world",
+    config: true,
+    type: String,
+    choices: {
+      always: "Dialog popups with buttons!",
+      chat: "All messages will be in chat with buttons.",
+      toasts: "All messages will be toasts. No buttons."
+    },
+    default: "always",
+  });
+});
