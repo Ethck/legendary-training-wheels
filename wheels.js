@@ -76,8 +76,20 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
             }
         }
 
-        let form = new LegActions(myLegends);
-        form.render(true);
+        const notifType = game.settings.get("legendary-training-wheels", "notificationType");
+
+        if (notifType === "dialog"){
+            let form = new LegActions(myLegends);
+            form.render(true);
+        } else if (notifType === "chat") {
+
+        } else if (notifType === "toasts") {
+            for (const myLeg of myLegends) {
+                ui.notifications.notify(myLeg.name + " has " + myLeg.remainingLegActions + "/" + myLeg.maxLegActions + " Legendary Actions remaining this round.");
+            }
+        } else {
+            // Something's wrong
+        }
     }
 })
 
@@ -90,38 +102,51 @@ Hooks.on("createChatMessage", async (message, options, id) => {
             if (legRes){
                 // Do the same with finding the max
                 const maxRes = getProperty(legTok, "actorData.data.resources.legres.max") || getProperty(legTok, "actor.data.data.resources.legres.max");
-                let use = false;
-                let d = new Dialog({
-                  title: 'Legendary Resistance',
-                  content: `A Saving Throw has been detected. Would you like to use Legendary Resistance to ignore it? You have ` + legRes + `/` + maxRes + ` resistances remaining.`,
-                  buttons: {
-                    yes: {
-                      icon: '<i class="fas fa-check"></i>',
-                      label: 'Yes',
-                      callback: () => (use = true),
-                    },
-                    no: {
-                        icon: '<i class="fas fa-close"></i>',
-                        label: 'No',
-                        callback: () => (use = false),
-                    }
-                  },
-                  close: async (html) => {
-                      if (use) {
-                        let legActor = game.actors.get(getProperty(message, "data.speaker.actor"));
-                        ChatMessage.create({
-                            user: game.user._id,
-                            speaker: ChatMessage.getSpeaker({legActor}),
-                            content: "If the creature fails a saving throw, it can choose to succeed instead.",
-                            flavor: "has used Legendary Resistance to succeed on the save!",
-                            type: CONST.CHAT_MESSAGE_TYPES.IC,
-                          });
-                        
-                        await legTok.update({"actorData.data.resources.legres.value": legRes - 1});
-                      }
-                    },
-                }).render(true);
-            }       
+
+                const notifType = game.settings.get("legendary-training-wheels", "notificationType");
+
+                if (notifType === "dialog"){
+                    let use = false;
+
+
+                    let d = new Dialog({
+                      title: 'Legendary Resistance',
+                      content: `A Saving Throw has been detected. Would you like to use Legendary Resistance to ignore it? You have ` + legRes + `/` + maxRes + ` resistances remaining.`,
+                      buttons: {
+                        yes: {
+                          icon: '<i class="fas fa-check"></i>',
+                          label: 'Yes',
+                          callback: () => (use = true),
+                        },
+                        no: {
+                            icon: '<i class="fas fa-close"></i>',
+                            label: 'No',
+                            callback: () => (use = false),
+                        }
+                      },
+                      close: async (html) => {
+                          if (use) {
+                            let legActor = game.actors.get(getProperty(message, "data.speaker.actor"));
+                            ChatMessage.create({
+                                user: game.user._id,
+                                speaker: ChatMessage.getSpeaker({legActor}),
+                                content: "If the creature fails a saving throw, it can choose to succeed instead.",
+                                flavor: "has used Legendary Resistance to succeed on the save!",
+                                type: CONST.CHAT_MESSAGE_TYPES.IC,
+                              });
+                            
+                            await legTok.update({"actorData.data.resources.legres.value": legRes - 1});
+                          }
+                        },
+                    }).render(true);
+                }
+            } else if (notifType === "chat") {
+
+            } else if (notifType === "toasts") {
+                ui.notifications.notify(legTok.name + " still has Legendary Resistances. " + legRes + "/" + maxRes)
+            } else {
+                // Something's wrong
+            }
         }
     }
 })
@@ -134,10 +159,10 @@ Hooks.once("init", () => {
     config: true,
     type: String,
     choices: {
-      always: "Dialog popups with buttons!",
+      dialog: "Dialog popups with buttons!",
       chat: "All messages will be in chat with buttons.",
       toasts: "All messages will be toasts. No buttons."
     },
-    default: "always",
+    default: "dialog",
   });
 });
