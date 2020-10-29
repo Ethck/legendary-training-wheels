@@ -81,8 +81,6 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
         if (notifType === "dialog"){
             let form = new LegActions(myLegends);
             form.render(true);
-        } else if (notifType === "chat") {
-
         } else if (notifType === "toasts") {
             for (const myLeg of myLegends) {
                 ui.notifications.notify(myLeg.name + " has " + myLeg.remainingLegActions + "/" + myLeg.maxLegActions + " Legendary Actions remaining this round.");
@@ -107,8 +105,6 @@ Hooks.on("createChatMessage", async (message, options, id) => {
 
                 if (notifType === "dialog"){
                     let use = false;
-
-
                     let d = new Dialog({
                       title: 'Legendary Resistance',
                       content: `A Saving Throw has been detected. Would you like to use Legendary Resistance to ignore it? You have ` + legRes + `/` + maxRes + ` resistances remaining.`,
@@ -140,8 +136,6 @@ Hooks.on("createChatMessage", async (message, options, id) => {
                         },
                     }).render(true);
                 }
-            } else if (notifType === "chat") {
-
             } else if (notifType === "toasts") {
                 ui.notifications.notify(legTok.name + " still has Legendary Resistances. " + legRes + "/" + maxRes)
             } else {
@@ -160,7 +154,6 @@ Hooks.once("init", () => {
     type: String,
     choices: {
       dialog: "Dialog popups with buttons!",
-      chat: "All messages will be in chat with buttons.",
       toasts: "All messages will be toasts. No buttons."
     },
     default: "dialog",
