@@ -1,7 +1,8 @@
 import { TemporaryCombatantForm } from "../combat-utility-belt/modules/temporary-combatants/form.js";
 import { LegActions } from "./legActions.js";
 
-
+// If adding a combatant that has a lair action, make a hidden temporary
+// combatant at init 20 to remind.
 Hooks.on("createCombatant", async (currCombat, currToken, options, currID) => {
     await new Promise(r => setTimeout(r, 200));
 
@@ -24,7 +25,8 @@ Hooks.on("createCombatant", async (currCombat, currToken, options, currID) => {
     }
 });
 
-
+// Keep track of when it's a player's turn and when it is a legendary
+// creatures turn. 
 Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
     let turn = currOptions.turn;
     // Find out where our Player Characters are in initiative.
@@ -35,10 +37,11 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
     currCombat.turns.forEach(async (combatant, pos) => {
         const legMax = getProperty(combatant, "token.actorData.data.resources.legact.max") || 
             getProperty(combatant, "actor.data.data.resources.legact.max");;
+        // Track player turns
         if (getProperty(combatant, "actor").hasPlayerOwner) {
             playerTurns.push(pos);
         } else if (legMax){
-            // Reset legendary actions when we get to the start of next entity's turn
+            // Reset legendary actions when we get to the start of next turn AFTER the legendary.
             if (turn === pos + 1 || (turn === 0 && pos === currCombat.turns.length - 1)) {
                 legUpdates.push({_id: combatant.token._id,  "actorData.data.resources.legact.value": legMax})
             }
@@ -48,7 +51,7 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
     // Update to reset leg actions
     await canvas.tokens.updateMany(legUpdates);
 
-    if (!playerTurns) return;
+    if (!playerTurns) return; // If no players, don't prompt for legActions
     if (playerTurns.some((pTurn) => ((turn === pTurn + 1) || (turn === 0 && pTurn === currCombat.turns.length - 1)))){
         let activeLegends = legends.map((legendary) => {
             const rLA = getProperty(legendary, "token.actorData.data.resources.legact.value") ||
@@ -85,15 +88,16 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
             for (const myLeg of myLegends) {
                 ui.notifications.notify(myLeg.name + " has " + myLeg.remainingLegActions + "/" + myLeg.maxLegActions + " Legendary Actions remaining this round.");
             }
-        } else {
-            // Something's wrong
         }
     }
 })
 
 Hooks.on("createChatMessage", async (message, options, id) => {
     if (message.isRoll) {
-        if (getProperty(message, "data.flavor") && getProperty(message, "data.flavor").includes("Saving Throw")) {
+        // BetterRolls 5e
+        const isBRSave = $(message.data.content).find(".item-name").text().includes("Save");
+
+        if ((getProperty(message, "data.flavor") && getProperty(message, "data.flavor").includes("Saving Throw") || isBRSave)) {
             let legTok = canvas.tokens.get(getProperty(message, "data.speaker.token"));
             // Find legRes property. Either from the token first or from the actor
             const legRes = getProperty(legTok, "actorData.data.resources.legres.value") || getProperty(legTok, "actor.data.data.resources.legres.value");
@@ -102,7 +106,6 @@ Hooks.on("createChatMessage", async (message, options, id) => {
                 const maxRes = getProperty(legTok, "actorData.data.resources.legres.max") || getProperty(legTok, "actor.data.data.resources.legres.max");
 
                 const notifType = game.settings.get("legendary-training-wheels", "notificationType");
-
                 if (notifType === "dialog"){
                     let use = false;
                     let d = new Dialog({
@@ -135,11 +138,9 @@ Hooks.on("createChatMessage", async (message, options, id) => {
                           }
                         },
                     }).render(true);
+                } else if (notifType === "toasts") {
+                    ui.notifications.notify(legTok.name + " still has Legendary Resistances. " + legRes + "/" + maxRes)
                 }
-            } else if (notifType === "toasts") {
-                ui.notifications.notify(legTok.name + " still has Legendary Resistances. " + legRes + "/" + maxRes)
-            } else {
-                // Something's wrong
             }
         }
     }
