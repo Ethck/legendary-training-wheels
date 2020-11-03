@@ -17,15 +17,29 @@ LTW has two differnt ways of notifying you about these problems.
 
 ### Option 1: Dialog boxes + buttons
 This option will spawn forms full of buttons/information for you to persuse and decide on. This is the default method.
+
+
 Actions
+
+
 ![Dialog Actions](images/dialog.png)
+
+
 Resistances
+
+
 ![Dialog Resistances](images/dialogresist.png)
 
 ### Option 2: Toasts!
 This option will spawn in small notifications that can easily be dismissed.
 
 Actions
+
+
 ![Toasts Actions](images/toastsAct.png)
+
+
 Resistances
+
+
 ![Toasts Resistances](images/toastsRes.png)
