@@ -4,6 +4,7 @@ import { LegActions } from "./legActions.js";
 // If adding a combatant that has a lair action, make a hidden temporary
 // combatant at init 20 to remind.
 Hooks.on("createCombatant", async (currCombat, currToken, options, currID) => {
+    if (!game.user.isGM) return;
     await new Promise(r => setTimeout(r, 200));
 
     // Does this actor have lair actions?
@@ -28,6 +29,7 @@ Hooks.on("createCombatant", async (currCombat, currToken, options, currID) => {
 // Keep track of when it's a player's turn and when it is a legendary
 // creatures turn. 
 Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
+    if (!game.user.isGM) return;
     let turn = currOptions.turn;
     // Find out where our Player Characters are in initiative.
     // And find our NPCs with legendary actions.
@@ -93,6 +95,7 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
 })
 
 Hooks.on("createChatMessage", async (message, options, id) => {
+    if (!game.user.isGM) return;
     if (message.isRoll) {
         // BetterRolls 5e
         const isBRSave = $(message.data.content).find(".item-name").text().includes("Save");
