@@ -1,14 +1,16 @@
 {
     "name": "legendary-training-wheels",
     "title": "Legendary Training Wheels",
-    "description": "This module provides reminders for legendary actions.",
-    "version": "0.0.1",
-    "minimumCoreVersion": "0.6.0",
-    "compatibleCoreVersion": "0.6.6",
+    "description": "This module provides reminders for lair actions, legendary actions, & resistances.",
+    "version": "0.1.0",
+    "minimumCoreVersion": "0.7.0",
+    "compatibleCoreVersion": "0.7.5",
     "author": "Ethck",
+    "systems": ["dnd5e"],
     "esmodules": ["/wheels.js"],
     "styles": ["/css/wheels.css"],
-    "url": "https://github.com/ethck/faction-sheet",
+    "url": "https://github.com/ethck/legendary-training-wheels",
     "manifest": "https://raw.githubusercontent.com/ethck/legendary-training-wheels/master/module.json",
-    "download": "https://github.com/ethck/legendary-training-wheels/"
+    "download": "https://github.com/ethck/legendary-training-wheels/releases/download/0.1.0/legendary-training-wheels.zip",
+    "readme": "https://github.com/Ethck/Ethck-s-Downtime-Tracking/blob/master/README.md",
 }
