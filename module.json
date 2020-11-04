@@ -19,5 +19,5 @@
             "type": "module",
             "manifest": "https://raw.githubusercontent.com/death-save/combat-utility-belt/master/module.json"
         }
-    ],
+    ]
 }
