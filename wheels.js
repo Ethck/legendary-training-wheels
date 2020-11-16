@@ -53,7 +53,8 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
     // Update to reset leg actions
     await canvas.tokens.updateMany(legUpdates);
 
-    if (!playerTurns) return; // If no players, don't prompt for legActions
+    if (!playerTurns.length) return; // If no players, don't prompt for legActions
+    if (!legends.length) return; // If no creatures with legendary actions, don't continue.
     if (playerTurns.some((pTurn) => ((turn === pTurn + 1) || (turn === 0 && pTurn === currCombat.turns.length - 1)))){
         let activeLegends = legends.map((legendary) => {
             const rLA = getProperty(legendary, "token.actorData.data.resources.legact.value") ||
