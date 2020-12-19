@@ -37,6 +37,7 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
     let legends = [];
     let legUpdates = [];
     currCombat.turns.forEach(async (combatant, pos) => {
+        if (getProperty(combatant, "flags.combat-utility-belt.temporaryCombatant")) return;
         const legMax = getProperty(combatant, "token.actorData.data.resources.legact.max") || 
             getProperty(combatant, "actor.data.data.resources.legact.max");;
         // Track player turns
