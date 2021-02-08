@@ -1,4 +1,3 @@
-import { TemporaryCombatantForm } from "../combat-utility-belt/modules/temporary-combatants/form.js";
 import { LegActions } from "./legActions.js";
 
 // If adding a combatant that has a lair action, make a hidden temporary
@@ -11,18 +10,27 @@ Hooks.on("createCombatant", async (currCombat, currToken, options, currID) => {
     if (hasProperty(currToken, "actor.data.data.resources.lair.value") && currToken.actor.data.data.resources.lair.value){
         // Have we already made a Lair Action Combatant?
         if(!currCombat.combatants.find((combatant) => combatant.token.name === "Lair Action")){
-            const temporaryCombatantForm = new TemporaryCombatantForm({});
-            // Render form, wait to fill
-            await temporaryCombatantForm.render(true);
-            await new Promise(r => setTimeout(r, 200));
-            // fill
-            let tcForm = $(temporaryCombatantForm.form);
-            tcForm.find('[name="name"]').val("Lair Action");
-            tcForm.find('[name="init"]').val(20);
-            tcForm.find('[name="hidden"]').attr("checked", true);
-            // submit / create temp combatant
-            temporaryCombatantForm.submit();
-        }
+            const actor = await Actor.create({
+                name: "Lair Action", 
+                type: "npc",
+                img: "icons/mystery-man.png"
+            },{displaySheet: false});
+
+            const tokenData = duplicate(actor.data.token);
+            tokenData.x = 0;
+            tokenData.y = 0;
+            tokenData.disposition = 0;
+            tokenData.img = "icons/mystery-man.png";
+            tokenData.actorId = actor.id;
+            tokenData.actorLink = true;
+            const token = await Token.create(tokenData);
+
+            const combatant = await game.combat.createEmbeddedEntity("Combatant", {
+                tokenId: token.id, 
+                hidden: true, 
+                initiative: 20
+            });
+            }
     }
 });
 

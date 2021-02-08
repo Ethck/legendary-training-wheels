@@ -2,9 +2,9 @@
     "name": "legendary-training-wheels",
     "title": "Legendary Training Wheels",
     "description": "This module provides reminders for lair actions, legendary actions, & resistances.",
-    "version": "0.1.1a",
+    "version": "0.1.2",
     "minimumCoreVersion": "0.7.0",
-    "compatibleCoreVersion": "0.7.7",
+    "compatibleCoreVersion": "0.7.9",
     "author": "Ethck",
     "systems": [
         "dnd5e"
@@ -17,13 +17,6 @@
     ],
     "url": "https://github.com/ethck/legendary-training-wheels",
     "manifest": "https://github.com/Ethck/legendary-training-wheels/releases/latest/download/module.json",
-    "download": "https://github.com/Ethck/legendary-training-wheels/releases/download/0.1.1a/legendary-training-wheels.zip",
-    "readme": "https://github.com/ethck/legendary-training-wheels/blob/master/README.md",
-    "dependencies": [
-        {
-            "name": "combat-utility-belt",
-            "type": "module",
-            "manifest": "https://raw.githubusercontent.com/death-save/combat-utility-belt/master/module.json"
-        }
-    ]
+    "download": "https://github.com/Ethck/legendary-training-wheels/releases/latest/download/legendary-training-wheels.zip",
+    "readme": "https://github.com/ethck/legendary-training-wheels/blob/master/README.md"
 }
