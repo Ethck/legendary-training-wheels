@@ -39,32 +39,32 @@ Hooks.on("createCombatant", async (currCombat, currToken, options, currID) => {
 Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
     if (!game.user.isGM) return;
     let turn = currOptions.turn;
-    // Find out where our Player Characters are in initiative.
+    // Find out where our non-legendary characters are in initiative.
     // And find our NPCs with legendary actions.
-    let playerTurns = [];
+    let nonLegendTurns = [];
     let legends = [];
     let legUpdates = [];
     currCombat.turns.forEach(async (combatant, pos) => {
-        if (getProperty(combatant, "flags.combat-utility-belt.temporaryCombatant")) return;
+        if (getProperty(combatant, "actor.data.name") === "Lair Action") return;
         const legMax = getProperty(combatant, "token.actorData.data.resources.legact.max") || 
             getProperty(combatant, "actor.data.data.resources.legact.max");;
-        // Track player turns
-        if (getProperty(combatant, "actor").hasPlayerOwner) {
-            playerTurns.push(pos);
-        } else if (legMax){
+        // Track legendary turns
+        if (legMax){
             // Reset legendary actions when we get to the start of next turn AFTER the legendary.
             if (turn === pos + 1 || (turn === 0 && pos === currCombat.turns.length - 1)) {
                 legUpdates.push({_id: combatant.token._id,  "actorData.data.resources.legact.value": legMax})
             }
             legends.push(combatant);
+        } else {
+            nonLegendTurns.push(pos);
         }
     });
     // Update to reset leg actions
     await canvas.tokens.updateMany(legUpdates);
 
-    if (!playerTurns.length) return; // If no players, don't prompt for legActions
+    if (!nonLegendTurns.length) return; // If no non-legendaries, don't prompt for legActions
     if (!legends.length) return; // If no creatures with legendary actions, don't continue.
-    if (playerTurns.some((pTurn) => ((turn === pTurn + 1) || (turn === 0 && pTurn === currCombat.turns.length - 1)))){
+    if (nonLegendTurns.some((pTurn) => ((turn === pTurn + 1) || (turn === 0 && pTurn === currCombat.turns.length - 1)))){
         let activeLegends = legends.map((legendary) => {
             const rLA = getProperty(legendary, "token.actorData.data.resources.legact.value") ||
                 getProperty(legendary, "actor.data.data.resources.legact.value")
