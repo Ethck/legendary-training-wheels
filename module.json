@@ -2,9 +2,9 @@
     "name": "legendary-training-wheels",
     "title": "Legendary Training Wheels",
     "description": "This module provides reminders for lair actions, legendary actions, & resistances.",
-    "version": "0.1.2",
-    "minimumCoreVersion": "0.8.0",
-    "compatibleCoreVersion": "0.8.5",
+    "version": "Replaced in releases",
+    "minimumCoreVersion": "9",
+    "compatibleCoreVersion": "9",
     "author": "Ethck",
     "system": [
         "dnd5e"
