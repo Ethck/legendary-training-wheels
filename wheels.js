@@ -77,7 +77,17 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
             if (turn === pos + 1 || (turn === 0 && pos === currCombat.turns.length - 1)) {
                 legUpdates.push({ _id: combatant.token.id, "actorData.data.resources.legact.value": legMax });
             }
-            legends.push(combatant);
+            // We can only use legendary actions at the END of ANOTHER creature's turn
+            // this means that it can't be the start of the creature's turn that follows ours :(
+            // because that is *actually* the trigger for the end of OUR turn
+            if (pos + 1 !== turn) {
+                // This is necessary to cover the circular edge case
+                if (turn === 0 && pos === currCombat.turns.length - 1) {
+                    // Just ignore this
+                } else {
+                    legends.push(combatant);
+                }
+            }
         } else {
             nonLegendTurns.push(pos);
         }
@@ -87,56 +97,61 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
         await canvas.scene.updateEmbeddedDocuments("Token", legUpdates);
     }
 
-    console.log(nonLegendTurns, legends);
-
     if (!nonLegendTurns.length) return; // If no non-legendaries, don't prompt for legActions
     if (!legends.length) return; // If no creatures with legendary actions, don't continue.
-    if (nonLegendTurns.some((pTurn) => turn === pTurn + 1 || (turn === 0 && pTurn === currCombat.turns.length - 1))) {
-        let activeLegends = legends.map((legendary) => {
-            const rLA =
-                getProperty(legendary, "token.data.actorData.data.resources.legact.value") ||
-                getProperty(legendary, "actor.data.data.resources.legact.value");
-            const mLA =
-                getProperty(legendary, "token.data.actorData.data.resources.legact.max") ||
-                getProperty(legendary, "actor.data.data.resources.legact.max");
-            const lItems =
-                getProperty(legendary, "token.data.actorData.data.items") || getProperty(legendary, "actor.data.items");
-            return {
-                name: getProperty(legendary, "name"),
-                remainingLegActions: rLA,
-                maxLegActions: mLA,
-                legendaryItems: lItems.filter((litem) => {
-                    if (hasProperty(litem, "data.data.activation") && litem.data.data.activation.type === "legendary") {
-                        return litem;
-                    }
-                }),
-                img: getProperty(legendary, "token.data.img"),
-                _id: getProperty(legendary, "token.id"),
-            };
-        });
-        let myLegends = [];
-        for (const legend of activeLegends) {
-            if (parseInt(legend.remainingLegActions) !== 0) {
-                myLegends.push(legend);
-            }
+
+    // An "Active" legend is any creature with legendary actions
+    // who CAN USE thier legendary actions.
+    // For this to be the case, it can NOT be the turn
+    // that immediately follows that legend's turn.
+    let activeLegends = legends.map((legendary) => {
+        // Remaining Legendary Actions
+        const rLA =
+            getProperty(legendary, "token.data.actorData.data.resources.legact.value") ||
+            getProperty(legendary, "actor.data.data.resources.legact.value");
+        // Maximum Legendary Actions
+        const mLA =
+            getProperty(legendary, "token.data.actorData.data.resources.legact.max") ||
+            getProperty(legendary, "actor.data.data.resources.legact.max");
+        // Legendary Items/Abilities/Features/etc.
+        const lItems =
+            getProperty(legendary, "token.data.actorData.data.items") || getProperty(legendary, "actor.data.items");
+        return {
+            name: getProperty(legendary, "name"),
+            remainingLegActions: rLA,
+            maxLegActions: mLA,
+            legendaryItems: lItems.filter((litem) => {
+                if (hasProperty(litem, "data.data.activation") && litem.data.data.activation.type === "legendary") {
+                    return litem;
+                }
+            }),
+            img: getProperty(legendary, "token.data.img"),
+            _id: getProperty(legendary, "token.id"),
+        };
+    });
+
+    let myLegends = [];
+    for (const legend of activeLegends) {
+        if (parseInt(legend.remainingLegActions) !== 0) {
+            myLegends.push(legend);
         }
+    }
 
-        const notifType = game.settings.get("legendary-training-wheels", "notificationType");
+    const notifType = game.settings.get("legendary-training-wheels", "notificationType");
 
-        if (notifType === "dialog") {
-            let form = new LegActions(myLegends);
-            form.render(true);
-        } else if (notifType === "toasts") {
-            for (const myLeg of myLegends) {
-                ui.notifications.notify(
-                    myLeg.name +
-                        " has " +
-                        myLeg.remainingLegActions +
-                        "/" +
-                        myLeg.maxLegActions +
-                        " Legendary Actions remaining this round."
-                );
-            }
+    if (notifType === "dialog") {
+        let form = new LegActions(myLegends);
+        form.render(true);
+    } else if (notifType === "toasts") {
+        for (const myLeg of myLegends) {
+            ui.notifications.notify(
+                myLeg.name +
+                    " has " +
+                    myLeg.remainingLegActions +
+                    "/" +
+                    myLeg.maxLegActions +
+                    " Legendary Actions remaining this round."
+            );
         }
     }
 });
