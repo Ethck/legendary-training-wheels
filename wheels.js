@@ -10,7 +10,7 @@ Hooks.on("createCombatant", async (currToken, options, id) => {
     const currCombat = currToken.parent.data;
     if (
         hasProperty(currToken, "actor.data.data.resources.lair.value") &&
-        currToken._actor.data.data.resources.lair.value
+        currToken.actor.data.data.resources.lair.value
     ) {
         // Have we already made a Lair Action Combatant?
         if (!currCombat.combatants.find((combatant) => combatant.token.name === "Lair Action")) {
@@ -50,6 +50,7 @@ Hooks.on("createCombatant", async (currToken, options, id) => {
                     tokenId: token.id,
                     hidden: true,
                     initiative: 20,
+                    "flags.legendary-training-wheels.lairaction": true,
                 },
             ]);
         }
@@ -99,6 +100,22 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
 
     if (!nonLegendTurns.length) return; // If no non-legendaries, don't prompt for legActions
     if (!legends.length) return; // If no creatures with legendary actions, don't continue.
+
+    // Determine if any lairActions are present (there should only be 1, but whatever)
+    const lairActions = currCombat.turns
+        .filter((combatant) => combatant.data.flags["legendary-training-wheels"]?.lairaction)
+        .map((combatant) => {
+            return combatant.id;
+        });
+    // Find the id of the previous turn
+    let prevTurnId;
+    if (currCombat.turn === 0) {
+        prevTurnId = currCombat.turns[currCombat.turns.length - 1].id;
+    } else {
+        prevTurnId = currCombat.turns[currCombat.turn - 1].id;
+    }
+    // If it's our custom "Lair Action" token, then return early
+    if (lairActions.includes(prevTurnId)) return;
 
     // An "Active" legend is any creature with legendary actions
     // who CAN USE thier legendary actions.
