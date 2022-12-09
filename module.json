@@ -1,19 +1,33 @@
 {
-    "name": "legendary-training-wheels",
+    "id": "legendary-training-wheels",
     "title": "Legendary Training Wheels",
     "description": "This module provides reminders for lair actions, legendary actions, & resistances.",
     "version": "Replaced in releases",
-    "minimumCoreVersion": "9",
-    "compatibleCoreVersion": "9",
-    "author": "Ethck",
-    "system": [
-        "dnd5e"
+    "authors": [
+        {
+            "name": "Ethck"
+        }
     ],
+    "compatibility": {
+        "minimum": "10",
+        "verified": "10.291"
+    },
+    "relationships": {
+        "systems": [{
+            "id": "dnd5e",
+            "type": "system",
+            "manifest": "https://raw.githubusercontent.com/foundryvtt/dnd5e/master/system.json",
+            "compatibility": {
+              "verified": "2.0.3"
+            }
+          }
+        ]
+    },
     "esmodules": [
-        "/wheels.js"
+        "./wheels.js"
     ],
     "styles": [
-        "/css/wheels.css"
+        "./css/wheels.css"
     ],
     "url": "https://github.com/ethck/legendary-training-wheels",
     "manifest": "https://github.com/Ethck/legendary-training-wheels/releases/latest/download/module.json",
