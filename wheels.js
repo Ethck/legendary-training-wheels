@@ -9,8 +9,8 @@ Hooks.on("createCombatant", async (currToken, options, id) => {
     // Does this actor have lair actions?
     const currCombat = currToken.parent.data;
     if (
-        hasProperty(currToken, "actor.data.data.resources.lair.value") &&
-        currToken.actor.data.data.resources.lair.value
+        hasProperty(currToken, "actor.system.resources.lair.value") &&
+        currToken.actor.system.resources.lair.value
     ) {
         // Have we already made a Lair Action Combatant?
         if (!currCombat.combatants.find((combatant) => combatant.token.name === "Lair Action")) {
@@ -32,7 +32,7 @@ Hooks.on("createCombatant", async (currToken, options, id) => {
             const lairToken = canvas.scene.tokens.getName("Lair Action");
             let token;
             if (!lairToken) {
-                const tokenData = duplicate(actor.data.token);
+                const tokenData = duplicate(actor.token);
                 tokenData.x = 0;
                 tokenData.y = 0;
                 tokenData.disposition = 0;
@@ -68,15 +68,15 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
     let legends = [];
     let legUpdates = [];
     currCombat.turns.forEach(async (combatant, pos) => {
-        if (getProperty(combatant, "actor.data.name") === "Lair Action") return;
+        if (getProperty(combatant, "actor.name") === "Lair Action") return;
         const legMax =
-            getProperty(combatant, "token.actorData.data.resources.legact.max") ||
-            getProperty(combatant, "actor.data.data.resources.legact.max");
+            getProperty(combatant, "token.actorData.system.resources.legact.max") ||
+            getProperty(combatant, "actor.system.resources.legact.max");
         // Track legendary turns
         if (legMax) {
             // Reset legendary actions when we get to the start of next turn AFTER the legendary.
             if (turn === pos + 1 || (turn === 0 && pos === currCombat.turns.length - 1)) {
-                legUpdates.push({ _id: combatant.token.id, "actorData.data.resources.legact.value": legMax });
+                legUpdates.push({ _id: combatant.token.id, "actorData.system.resources.legact.value": legMax });
             }
             // We can only use legendary actions at the END of ANOTHER creature's turn
             // this means that it can't be the start of the creature's turn that follows ours :(
@@ -103,7 +103,7 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
 
     // Determine if any lairActions are present (there should only be 1, but whatever)
     const lairActions = currCombat.turns
-        .filter((combatant) => combatant.data.flags["legendary-training-wheels"]?.lairaction)
+        .filter((combatant) => combatant.flags["legendary-training-wheels"]?.lairaction)
         .map((combatant) => {
             return combatant.id;
         });
@@ -124,25 +124,25 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
     let activeLegends = legends.map((legendary) => {
         // Remaining Legendary Actions
         const rLA =
-            getProperty(legendary, "token.data.actorData.data.resources.legact.value") ||
-            getProperty(legendary, "actor.data.data.resources.legact.value");
+            getProperty(legendary, "token.actorData.system.resources.legact.value") ||
+            getProperty(legendary, "actor.system.resources.legact.value");
         // Maximum Legendary Actions
         const mLA =
-            getProperty(legendary, "token.data.actorData.data.resources.legact.max") ||
-            getProperty(legendary, "actor.data.data.resources.legact.max");
+            getProperty(legendary, "token.actorData.system.resources.legact.max") ||
+            getProperty(legendary, "actor.system.resources.legact.max");
         // Legendary Items/Abilities/Features/etc.
         const lItems =
-            getProperty(legendary, "token.data.actorData.data.items") || getProperty(legendary, "actor.data.items");
+            getProperty(legendary, "token.actorData.items") || getProperty(legendary, "actor.items");
         return {
             name: getProperty(legendary, "name"),
             remainingLegActions: rLA,
             maxLegActions: mLA,
             legendaryItems: lItems.filter((litem) => {
-                if (hasProperty(litem, "data.data.activation") && litem.data.data.activation.type === "legendary") {
+                if (hasProperty(litem, "system.activation") && litem.system.activation.type === "legendary") {
                     return litem;
                 }
             }),
-            img: getProperty(legendary, "token.data.img"),
+            img: getProperty(legendary, "img"),
             _id: getProperty(legendary, "token.id"),
         };
     });
@@ -175,29 +175,31 @@ Hooks.on("updateCombat", async (currCombat, currOptions, isDiff, userID) => {
 
 Hooks.on("createChatMessage", async (message, options, id) => {
     if (!game.user.isGM) return;
-    if (message._roll) {
+    if (message.rolls) {
+        // TODO Better rolls is no longer maintained. Probably need to test with and account for
+        // Ready Set Roll for 5e - https://github.com/MangoFVTT/fvtt-ready-set-roll-5e
         // BetterRolls 5e
-        const isBRSave = $(message.data.content).find("img")?.attr("title")?.toLowerCase()?.includes("save");
+        const isBRSave = $(message.content).find("img")?.attr("title")?.toLowerCase()?.includes("save");
 
         if (
-            (getProperty(message, "data.flavor") && getProperty(message, "data.flavor").includes("Saving Throw")) ||
+            (getProperty(message, "flavor") && getProperty(message, "flavor").includes("Saving Throw")) ||
             isBRSave
         ) {
             let legTok;
             if (isBRSave) {
-                legTok = canvas.scene.tokens.getName(getProperty(message, "data.speaker.alias"));
+                legTok = canvas.scene.tokens.getName(getProperty(message, "speaker.alias"));
             } else {
-                legTok = canvas.scene.tokens.get(getProperty(message, "data.speaker.token"));
+                legTok = canvas.scene.tokens.get(getProperty(message, "speaker.token"));
             }
             // Find legRes property. Either from the token first or from the actor
             const legRes =
-                getProperty(legTok, "actorData.data.resources.legres.value") ||
-                getProperty(legTok, "actor.data.data.resources.legres.value");
+                getProperty(legTok, "actorData.system.resources.legres.value") ||
+                getProperty(legTok, "actor.system.resources.legres.value");
             if (legRes) {
                 // Do the same with finding the max
                 const maxRes =
-                    getProperty(legTok, "actorData.data.resources.legres.max") ||
-                    getProperty(legTok, "actor.data.data.resources.legres.max");
+                    getProperty(legTok, "actorData.system.resources.legres.max") ||
+                    getProperty(legTok, "actor.system.resources.legres.max");
 
                 const notifType = game.settings.get("legendary-training-wheels", "notificationType");
                 if (notifType === "dialog") {
@@ -224,7 +226,7 @@ Hooks.on("createChatMessage", async (message, options, id) => {
                         },
                         close: async (html) => {
                             if (use) {
-                                let legActor = game.actors.get(getProperty(message, "data.speaker.actor"));
+                                let legActor = game.actors.get(getProperty(message, "speaker.actor"));
                                 ChatMessage.create({
                                     user: game.user.id,
                                     speaker: ChatMessage.getSpeaker({ legActor }),
@@ -232,8 +234,8 @@ Hooks.on("createChatMessage", async (message, options, id) => {
                                     flavor: "has used Legendary Resistance to succeed on the save!",
                                     type: CONST.CHAT_MESSAGE_TYPES.IC,
                                 });
-                                await legTok.data.document.update({
-                                    "actorData.data.resources.legres.value": legRes - 1,
+                                await legTok.document.update({
+                                    "actorData.system.resources.legres.value": legRes - 1,
                                 });
                             }
                         },

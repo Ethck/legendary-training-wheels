@@ -42,12 +42,7 @@ export class LegActions extends FormApplication {
     // find the attack being used, by name
     let attack = legToken.actor.items.getName(elem.attr("id"));
 
-    // Thanks D&D5e System!
-    if ( attack.data.type === "spell" ) {
-      legToken.useSpell(attack);
-    } else {
-      attack.roll();
-    }
+    attack.use();
 
     elem.parent().parent().find("button").prop("disabled",true);
 
